@@ -1,0 +1,8 @@
+{
+  "name": "cmnty anime",
+  "description": "Stream Anime Free Without Those Annoying Ads. High-quality anime streaming with real-time weekly schedule, trailers, and anime catalog.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
