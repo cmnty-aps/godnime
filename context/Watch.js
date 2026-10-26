@@ -1,9 +1,7 @@
 "use client";
 
-import { fetchWatchData } from "@/lib/StreamingVideo";
 import { useSearchParams } from "next/navigation";
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { toast } from "react-toastify";
 
 export const WatchAreaContext = createContext();
 
@@ -11,86 +9,81 @@ export function WatchAreaContextProvider({ children, AnimeInfo }) {
   const searchparam = useSearchParams();
 
   const [episode, setEpisode] = useState(() => {
-    const epFromSearch = parseInt(searchparam.get("ep"));
-    return !isNaN(epFromSearch) ? epFromSearch : 1;
+    const epFromSearch = parseInt(searchparam.get("ep"), 10);
+    return !isNaN(epFromSearch) && epFromSearch > 0 ? epFromSearch : 1;
   });
 
   const [watchInfo, setWatchInfo] = useState({ loading: true });
   const [isDub, setIsDub] = useState(false);
-  const [episodes, setEpisodes] = useState("loading");
+  const [episodes, setEpisodes] = useState([]);
   const [server, setServer] = useState("sub");
 
-  const [sub, dub] = episodes !== "loading" && episodes.length > 0
-    ? [episodes.filter(e => e?.isSubbed), episodes.filter(e => e?.isDubbed)]
-    : [[], []];
-
-
-
+  // Construct episode list directly from AniList data
   useEffect(() => {
-    if (!episodes || episodes === "loading") return;
+    if (!AnimeInfo) return;
 
-    const fetchData = async () => {
-      try {
-        setWatchInfo((prev) => ({ ...prev, loading: true }));
+    const rawEp =
+      AnimeInfo?.episodes ||
+      (AnimeInfo?.nextAiringEpisode?.episode
+        ? AnimeInfo.nextAiringEpisode.episode - 1
+        : 12);
 
-        if (episodes.length === 0) {
-          toast("No Episodes found");
-          return;
-        }
+    const totalEp = Math.max(1, rawEp || 1);
 
-        const currentEpisode = episodes.find((ep) => ep.number === episode);
-        if (!currentEpisode) {
-          toast("Episode not found");
-          return;
-        }
+    const generatedEpisodes = Array.from({ length: totalEp }, (_, i) => ({
+      id: i + 1,
+      number: i + 1,
+      title: `Episode ${i + 1}`,
+      isSubbed: true,
+      isDubbed: true,
+    }));
 
-        const [watchData, episodeData] = await Promise.all([
-          fetchWatchData(currentEpisode.id, !!(server === "dub")),
-          findEpisodeData(!!(server === "dub") ? dub : sub, episode),
-        ]);
+    setEpisodes(generatedEpisodes);
+  }, [AnimeInfo]);
 
-        setWatchInfo({
-          watchData,
-          thumbnail: episodeData?.image || "",
-          title: episodeData?.title || `Episode ${episode}`,
-          loading: false,
-        });
-      } catch (error) {
-        console.error("Failed to fetch watch info:", error);
-        toast("Failed to load episode data");
-        setWatchInfo((prev) => ({ ...prev, loading: false }));
-      }
-    };
-
-    fetchData();
-  }, [episode, server, episodes]);
-
-
-
+  // Construct player streaming embed URL based on AniList ID + Episode + Sub/Dub
   useEffect(() => {
+    if (!AnimeInfo?.id) return;
+
+    const isDubbed = server === "dub" || isDub;
+    const currentEpNum = episode || 1;
+    const embedUrl = `https://megaplay.buzz/stream/ani/${AnimeInfo.id}/${currentEpNum}/${isDubbed ? "dub" : "sub"}`;
+
+    setWatchInfo({
+      embedUrl,
+      title: `${AnimeInfo?.title?.english || AnimeInfo?.title?.romaji || "Anime"} - Episode ${currentEpNum}`,
+      loading: false,
+    });
+
+    // Automatically update watch history
     if (typeof window !== "undefined") {
-      const watchHistory = JSON.parse(localStorage.getItem("watch_history")) || {};
-      const animeHistory = watchHistory?.[AnimeInfo?.id];
-      const epFromHistory = parseInt(animeHistory?.episode);
-
-      if (!isNaN(epFromHistory) && !searchparam.get("ep")) {
-        setEpisode(epFromHistory);
-      }
+      try {
+        const history = JSON.parse(localStorage.getItem("watch_history") || "{}");
+        history[AnimeInfo.id] = {
+          id: AnimeInfo.id,
+          animeid: AnimeInfo.id,
+          title: AnimeInfo?.title?.english || AnimeInfo?.title?.romaji || "Anime",
+          episode: currentEpNum,
+          thumbnail: AnimeInfo?.coverImage?.extraLarge || AnimeInfo?.bannerImage,
+          updatedAt: Date.now(),
+        };
+        localStorage.setItem("watch_history", JSON.stringify(history));
+      } catch (e) {}
     }
-  }, [AnimeInfo?.id, episodes]);
+  }, [episode, server, isDub, AnimeInfo]);
 
-  const findEpisodeData = (selectedList, episodeNumber) => {
-    return selectedList?.find((item) => item.number === episodeNumber);
-  };
-
-
-  const handleError = (error, isMounted) => {
-    console.error("Failed to fetch watch data:", error);
-    if (isMounted) {
-      setWatchInfo({ loading: false, error: "Failed to fetch data" });
-      toast("Failed to fetch data");
+  // Load last watched episode from history if available
+  useEffect(() => {
+    if (typeof window !== "undefined" && AnimeInfo?.id) {
+      try {
+        const history = JSON.parse(localStorage.getItem("watch_history") || "{}");
+        const epFromHistory = parseInt(history?.[AnimeInfo.id]?.episode, 10);
+        if (!isNaN(epFromHistory) && epFromHistory > 0 && !searchparam.get("ep")) {
+          setEpisode(epFromHistory);
+        }
+      } catch (e) {}
     }
-  };
+  }, [AnimeInfo?.id, searchparam]);
 
   const contextValue = useMemo(
     () => ({

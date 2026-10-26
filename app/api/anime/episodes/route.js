@@ -1,15 +1,14 @@
 import { getEpisodes } from "@/actions/episode";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
 
 export async function GET(req, { params }) {
   try {
-    const animeId = decodeURIComponent(req.nextUrl.searchParams.get("animeid"))
-    const titles = JSON.parse(decodeURIComponent(req.nextUrl.searchParams.get("tits")) || "{}")
+    const animeId = decodeURIComponent(req.nextUrl.searchParams.get("animeid") || "");
+    const titles = JSON.parse(decodeURIComponent(req.nextUrl.searchParams.get("tits") || "{}") || "{}");
 
-
-
-    if (!animeId || !(titles.english)) {
+    if (!animeId || !titles.english) {
       return NextResponse.json({ error: "Anime ID Or title is required" }, { status: 400 });
     }
 

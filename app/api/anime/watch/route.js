@@ -2,6 +2,8 @@ import { StreamingServers } from "@consumet/extensions";
 import AnimeKai from "@consumet/extensions/dist/providers/anime/animekai";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const fetchStreamingData = async (episodeId, isDub) => {
   try {
     if (!episodeId) {
@@ -14,7 +16,6 @@ const fetchStreamingData = async (episodeId, isDub) => {
       StreamingServers.MegaUp,
       !!isDub ? "dub" : "sub"
     );
-
 
     if (!data || (data.message === "Anime not found" && (!Array.isArray(data) || data.length < 1))) {
       console.warn(`No data found for episode ${episodeId}`);
@@ -30,9 +31,8 @@ const fetchStreamingData = async (episodeId, isDub) => {
 
 export async function GET(req, { params }) {
   try {
-    const episodeId = decodeURIComponent(req.nextUrl.searchParams.get("episodeid"))
+    const episodeId = decodeURIComponent(req.nextUrl.searchParams.get("episodeid") || "");
     const isdub = req.nextUrl.searchParams.get("isdub");
-
 
     if (!episodeId) {
       return NextResponse.json({ error: "Episode ID is required" }, { status: 400 });

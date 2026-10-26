@@ -54,7 +54,9 @@ export default function RootLayout({ children }) {
       <body className={inter.className}>
         <AuthProvider>
           <Header />
-          {children}
+          <div className="w-full overflow-x-hidden min-h-screen relative">
+            {children}
+          </div>
           {/* <Footer /> */}
           <BottomNav />
         </AuthProvider>

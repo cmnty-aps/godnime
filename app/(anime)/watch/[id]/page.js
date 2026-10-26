@@ -17,16 +17,16 @@ export async function generateMetadata({ params }) {
   const data = await AnimeInfoAnilist(AnimeID)
   const hasAnime = (data?.title?.english || data?.title?.romaji)
   return {
-    title: hasAnime ? `Watch ${data?.title?.english || data?.title?.romaji} - Taro` || 'Loading...' : `Anime Not Found`,
+    title: hasAnime ? `Watch ${data?.title?.english || data?.title?.romaji} - cmnty anime` || 'Loading...' : `Anime Not Found`,
     description: data?.description?.slice(0, 180),
     openGraph: {
-      title: "Watch" + ' - ' + data?.title?.english || data?.title?.romaji + "in Taro",
+      title: "Watch" + ' - ' + (data?.title?.english || data?.title?.romaji) + " in cmnty anime",
       images: [data?.coverImage?.extraLarge],
       description: data?.description,
     },
     twitter: {
       card: "summary",
-      title: "Watch" + ' - ' + data?.title?.english || data?.title?.romaji + "in Taro",
+      title: "Watch" + ' - ' + (data?.title?.english || data?.title?.romaji) + " in cmnty anime",
       description: data?.description?.slice(0, 180),
     },
   }
@@ -41,7 +41,7 @@ const Watch = async ({ params }) => {
 
   return animeInfo ? (
     <Fragment>
-      <div className="w-full flex flex-col items-center z-10 relative main-responsive top-[106px]">
+      <div className="w-full flex flex-col items-center z-10 relative main-responsive top-[106px] pb-20">
         <div className="w-full max-w-[96rem]">
           {/* container div in this context ⬇ ⬇ */}
           <WatchSettingContextProvider>
@@ -60,7 +60,7 @@ const Watch = async ({ params }) => {
           <Additionalinfo info={animeInfo} />
 
 
-          <div className="flex mb-5 gap-5 max-[1125px]:flex-col">
+          <div className="flex mb-6 gap-5 max-[1125px]:flex-col">
             <Comments AnimeID={AnimeID} title={animeInfo?.title?.english} />
             <Recommendation info={animeInfo} />
           </div>
