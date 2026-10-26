@@ -1,43 +1,74 @@
-"use client"
-import Card from "@/components/Cards/Card/Card"
-import { PopularAnilist } from "@/lib/Anilistfunction"
-import { useEffect, useState } from "react"
+"use client";
+import Card from "@/components/Cards/Card/Card";
+import { PopularAnilist } from "@/lib/Anilistfunction";
+import { useEffect, useState } from "react";
 
 const Popular = () => {
-  const [page, setPage] = useState(1)
-  const [popularData, setPopularData] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1);
+  const [popularData, setPopularData] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(10);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isCancelled = false;
     const getPopular = async () => {
-      setLoading(true)
-      const data = await PopularAnilist(page)
-      setPopularData([...popularData, ...data])
-      setLoading(false)
+      setLoading(true);
+      const data = await PopularAnilist(page);
+      if (!isCancelled) {
+        setPopularData((prev) => {
+          const combined = [...prev, ...data];
+          // Remove duplicates
+          const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
+          return unique;
+        });
+        setLoading(false);
+      }
+    };
+    getPopular();
+    return () => {
+      isCancelled = true;
+    };
+  }, [page]);
+
+  const handleLoadMore = () => {
+    const nextVisible = visibleCount + 10;
+    setVisibleCount(nextVisible);
+    if (nextVisible >= popularData.length - 5 && !loading) {
+      setPage((prev) => prev + 1);
     }
-    getPopular()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page])
+  };
+
+  const visibleItems = popularData.slice(0, visibleCount);
 
   return (
     <div className="w-full max-w-[96rem] relative bottom-28 mx-5">
-      <h1 className="text-[#ffffffbd] font-medium text-2xl font-['poppins']">| Most Popular</h1>
-
+      <h1 className="text-[#ffffffbd] font-medium text-2xl font-['poppins']">
+        | Most Popular
+      </h1>
 
       <div className="mt-8 grid grid-auto-fit gap-3">
-        {popularData.map((item, index) => <Card data={item} key={index} />)}
-        {loading ? Array(page === 1 ? 20 : 13).fill(0).map((_, index) => <Card key={index} loading />) : null}
+        {visibleItems.map((item, index) => (
+          <Card data={item} key={item?.id || index} />
+        ))}
+        {loading && visibleItems.length === 0
+          ? Array.from({ length: 10 }).map((_, index) => (
+              <Card key={index} index={index} loading />
+            ))
+          : null}
       </div>
 
       <div className="mt-8 w-full flex justify-center">
-        <div
-          className="bg-[#22212c] hover:bg-[#2d2c3e] cursor-pointer w-full max-w-96 text-center py-2 rounded-lg text-slate-200"
-          onClick={() => setPage(page + 1)}
-        >Load More</div>
+        <button
+          type="button"
+          disabled={loading && visibleItems.length === 0}
+          className="bg-[#22212c] hover:bg-[#2d2c3e] cursor-pointer w-full max-w-96 text-center py-2.5 rounded-lg text-slate-200 transition font-medium select-none disabled:opacity-50"
+          onClick={handleLoadMore}
+        >
+          {loading ? "Memuat..." : "Load More"}
+        </button>
       </div>
-
     </div>
-  )
-}
+  );
+};
 
-export default Popular
+export default Popular;

@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { schedule as scheduleQuery } from "@/lib/anilistqueries";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 const DAYS = [
   { id: 0, label: "Senin" },
@@ -305,24 +306,24 @@ export default function SchedulePage() {
         </div>
       )}
 
-      {/* Floating Prev & Next Day buttons (from screenshot) */}
+      {/* Floating Prev & Next Day buttons with FaArrowLeft and FaArrowRight icons */}
       <div className="fixed bottom-20 left-4 right-4 max-w-xl mx-auto flex items-center justify-between pointer-events-none z-30">
         <button
           type="button"
           onClick={() => setSelectedDay(prevDayIndex)}
-          className="pointer-events-auto bg-[#131926f2] backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full border border-[#2b354c] shadow-xl flex items-center gap-1.5 hover:bg-[#1b2336] active:scale-95 transition"
+          className="pointer-events-auto bg-[#131926f2] backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full border border-[#2b354c] shadow-xl flex items-center gap-2 hover:bg-[#1b2336] active:scale-95 transition"
         >
-          <span>&larr;</span>
+          <FaArrowLeft className="text-xs text-slate-200" />
           <span>{prevDayLabel}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setSelectedDay(nextDayIndex)}
-          className="pointer-events-auto bg-[#131926f2] backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full border border-[#2b354c] shadow-xl flex items-center gap-1.5 hover:bg-[#1b2336] active:scale-95 transition ml-auto"
+          className="pointer-events-auto bg-[#131926f2] backdrop-blur-md text-white text-xs font-semibold px-4 py-2 rounded-full border border-[#2b354c] shadow-xl flex items-center gap-2 hover:bg-[#1b2336] active:scale-95 transition ml-auto"
         >
           <span>{nextDayLabel}</span>
-          <span>&rarr;</span>
+          <FaArrowRight className="text-xs text-slate-200" />
         </button>
       </div>
     </div>
